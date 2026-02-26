@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-<title>Print &amp; Profit – 3D Print Tycoon v17.6.4</title>
+<title>Print &amp; Profit – 3D Print Tycoon v17.7.0</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@300;500;700;900&display=swap');
 
@@ -4001,7 +4001,7 @@ input[type="text"], input[type="number"], select {
 <div class="settings-label">📖 Tutorial</div>
 <div class="settings-sub">Restart the onboarding</div>
 </div>
-<button class="btn btn-ghost btn-sm" onclick="Tutorial.start()">Restart</button>
+<button class="btn btn-ghost btn-sm" onclick="localStorage.removeItem('pnp_tutorial_done');Tutorial.start(true)">Restart</button>
 </div>
 <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
 <div class="settings-label">💾 Save / Export</div>
@@ -4009,9 +4009,12 @@ input[type="text"], input[type="number"], select {
 <button class="btn btn-ghost btn-sm" onclick="Game.saveGame(true)" style="flex:1">Manual Save</button>
 <button class="btn btn-ghost btn-sm" onclick="Game.exportSave()" style="flex:1">📤 Export JSON</button>
 </div>
-<label class="btn btn-ghost btn-sm" style="flex:1;cursor:pointer;text-align:center;width:100%">
+<div style="display:flex;gap:6px;flex-wrap:wrap;width:100%">
+<label class="btn btn-ghost btn-sm" style="flex:1;cursor:pointer;text-align:center">
                 📥 Import Save <input accept=".json" onchange="Game.importSave(event)" style="display:none" type="file"/>
 </label>
+<button class="btn btn-ghost btn-sm" onclick="Game.restoreBackup()" style="flex:1">🔄 Herstel Backup</button>
+</div>
 </div>
 <div class="settings-danger-zone">
 <div class="settings-danger-title">⚠ Danger Zone</div>
@@ -4138,7 +4141,7 @@ input[type="text"], input[type="number"], select {
 <script>
 
 // ── CONFIG ───────────────────────────────────────────────────
-const APP_VERSION = 17.6;
+const APP_VERSION = 17.7;
 
 // ── UTILITY HELPERS ──────────────────────────────────────────
 /** Round to 2 decimal places (€ values) */
@@ -4156,6 +4159,9 @@ const filClass = f => ({ 'PA6':'pa6', 'PA6-GF':'pa6', 'TPU':'tpu', 'RESIN':'resi
 const fmtEur = v => `€${r2(v).toFixed(2)}`;
 /** Format time in m:ss */
 const fmtTime = s => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+
+/** Escape HTML to prevent XSS in dynamic content */
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 const CONFIG = {
   TICK_MS:            500,
@@ -4252,7 +4258,7 @@ const CONFIG = {
     { id:'cf_nozzle',       name:'CF Nozzle + Enclosure',      desc:'Hardened nozzle en enclosure voor Carbon Fiber. Vermindert de 35% faalkans met 20% → ~15% effectief.', effect:'Unlock CF filament, −20% CF fail', cost:1800, unlockLevel:5, category:'expansion', premium:false, apply:(s)=>{ s.cfUnlocked=true; s.cfNozzle=true; } },
     // ── PRO UPGRADES ──
     { id:'smart_queue',    name:'Smart Queue',          desc:'AI auto-assigns the highest-value pending order to the next free printer.',  effect:'Auto-assign orders', cost:0, unlockLevel:1, category:'pro', premium:true, apply:(s)=>{ s.smartQueue = true; } },
-    { id:'ai_quality',     name:'AI Quality Control',  desc:'Computer vision detects failures mid-print and cancels early.',              effect:'−50% failure damage',  cost:0, unlockLevel:1, category:'pro', premium:true, apply:(s)=>{ s.aiQuality = true; } },
+    { id:'ai_quality',     name:'AI Quality Control',  desc:'Computer vision detecteert fouten mid-print en annuleert vroeg. −30% schade bij falen.',  effect:'−30% failure damage',  cost:0, unlockLevel:1, category:'pro', premium:true, apply:(s)=>{ s.aiQuality = true; } },
     { id:'supplier_ai',    name:'Supplier AI',         desc:'AI monitors market and auto-buys filament when prices are low.',             effect:'Auto-buy cheap filament', cost:0, unlockLevel:3, category:'pro', premium:true, apply:(s)=>{ s.supplierAI = true; } },
   ],
 
@@ -4862,7 +4868,8 @@ const Sound = {
 
   _ensureCtx() {
     if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e) { this.muted = true; return null; }
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     return this.ctx;
@@ -5226,7 +5233,7 @@ const CustomerLoyalty = {
     const quote = quotes[Math.floor(Math.random() * quotes.length)];
     const toast = document.createElement('div');
     toast.className = 'quote-toast';
-    toast.innerHTML = `<div class="q-name">💬 ${order.customer}</div><div class="q-text">"${quote}"</div>`;
+    toast.innerHTML = `<div class="q-name">💬 ${escHtml(order.customer)}</div><div class="q-text">"${escHtml(quote)}"</div>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3500);
   },
@@ -5297,6 +5304,10 @@ const Combo = {
     if (State.combo > (State.stats.maxCombo || 0)) State.stats.maxCombo = State.combo;
     this.render();
     BountyBoard.onCombo(State.combo);
+    // Show hint on first combo hit so players understand the system
+    if (State.combo === 1) {
+      UI.toast('🔥 Combo gestart! Voltooi nog een job binnen 30s voor bonus!', 'info');
+    }
     if (State.combo >= 2) {
       const mult = this.getMultiplier();
       UI.log(`🔥 ${State.combo}× Combo! +${Math.round((mult-1)*100)}% bonus`, 'money');
@@ -6378,13 +6389,22 @@ const LootBox = {
 const Confetti = {
   COLORS: ['#00e5ff','#ff6b35','#7fff6e','#ffcc00','#ff3d5a','#a78bfa','#4fc3f7'],
 
+  _active: 0,
+  MAX_ACTIVE: 120, // prevent particle overload
+  _reducedMotion: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false,
+
   burst(count = 60) {
+    if (this._reducedMotion) return; // respect accessibility preference
+    count = Math.min(count, this.MAX_ACTIVE - this._active);
+    if (count <= 0) return;
     for (let i = 0; i < count; i++) {
       setTimeout(() => this._piece(), Math.random() * 600);
     }
   },
 
   _piece() {
+    if (this._active >= this.MAX_ACTIVE) return;
+    this._active++;
     const el = document.createElement('div');
     el.className = 'confetti-piece';
     const size = 6 + Math.random() * 8;
@@ -6396,7 +6416,7 @@ const Confetti = {
       border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
     `;
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 4000);
+    setTimeout(() => { el.remove(); this._active--; }, 4000);
   },
 
   levelUp() {
@@ -6444,10 +6464,17 @@ const Particles = {
   },
 
   // Circular burst of colored dots from screen center
+  _burstActive: 0,
+  MAX_BURST: 60,
+  _reducedMotion: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false,
   screenBurst(color, count = 20) {
+    if (this._reducedMotion) return;
+    count = Math.min(count, this.MAX_BURST - this._burstActive);
+    if (count <= 0) return;
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
     for (let i = 0; i < count; i++) {
+      this._burstActive++;
       const el = document.createElement('div');
       el.className = 'success-burst';
       const angle = (Math.PI * 2 / count) * i;
@@ -6462,7 +6489,7 @@ const Particles = {
         --dur:${0.7 + Math.random()*0.4}s;
       `;
       document.body.appendChild(el);
-      setTimeout(() => el.remove(), 1200);
+      setTimeout(() => { el.remove(); this._burstActive--; }, 1200);
     }
   },
 
@@ -7764,8 +7791,13 @@ const Market = {
       State.market[f] = r2(State.market[f] );
     });
     this.renderTicker(prev);
-    UI.log(`📈 Market shift — PLA ×${State.market.PLA} · PETG ×${State.market.PETG} · PA6 ×${State.market.PA6}`, 'info');
-
+    // Show which filaments went up or down
+    const changes = ['PLA','PETG','PA6'].map(f => {
+      const diff = State.market[f] - (prev[f] || 1);
+      return diff > 0.02 ? `${f} ↑` : diff < -0.02 ? `${f} ↓` : null;
+    }).filter(Boolean);
+    const summary = changes.length > 0 ? changes.join(', ') : 'kleine fluctuaties';
+    UI.log(`📈 Markt update: ${summary} — verkoop duurder filament voor hogere marge!`, 'info');
   },
 
   renderTicker(prev) {
@@ -8415,8 +8447,8 @@ const Printer = {
     const success = Math.random() > job.fail;
 
     const pIdx = State.printers.indexOf(printer);
-    // AI Quality Control: intercept failure early (50% chance)
-    if (!success && State.aiQuality && Math.random() < 0.5) {
+    // AI Quality Control: intercept failure early (30% chance)
+    if (!success && State.aiQuality && Math.random() < 0.30) {
       printer.health    = Math.max(0, printer.health - 2);
       State.nextFailBoost = 0;
       Sound.failure();
@@ -9221,9 +9253,18 @@ const UI = {
     const row=$el('quality-row'); if(!row) return;
     row.parentElement.style.display='';
     row.innerHTML='';
+    const tips = {
+      DRAFT:  'Snel & goedkoop. Lagere winst, hogere faalkans.',
+      NORMAL: 'Standaard balans. Goed voor de meeste orders.',
+      FINE:   'Hogere winst & rep, maar duurt langer.',
+      ULTRA:  'Maximale winst & reputatie. Traag maar veilig.',
+    };
     Object.entries(CONFIG.QUALITY).forEach(([id,q])=>{
       const btn=document.createElement('div'); btn.className=`quality-btn ${sel===id?'selected':''}`;
-      btn.innerHTML=`<div class="quality-label">${q.name}</div>`;
+      btn.title = tips[id] || '';
+      const profitPct = Math.round((q.profitMult - 1) * 100);
+      const timeExtra = Math.round((q.timeMult - 1) * 100);
+      btn.innerHTML=`<div class="quality-label">${q.name}</div><div style="font-size:8px;color:var(--text-dim);margin-top:2px">${profitPct>=0?'+':''}${profitPct}% winst · ${timeExtra>=0?'+':''}${timeExtra}% tijd</div>`;
       btn.onclick=()=>{ State.selectedQuality=id; UI.renderCenterPanel(); };
       row.appendChild(btn);
     });
@@ -9568,7 +9609,10 @@ const UI = {
     if (!p) return;
     const newName = prompt(`Nieuwe naam voor ${p.name}:`, p.name);
     if (newName && newName.trim()) {
-      p.name = newName.trim().slice(0, 20);
+      // Sanitize: strip HTML tags and limit length
+      const clean = newName.trim().replace(/<[^>]*>/g, '').slice(0, 20);
+      if (!clean) return;
+      p.name = clean;
       this.renderPrinters();
       UI.log(`Printer hernoemd naar "${p.name}"`, 'info');
     }
@@ -9922,9 +9966,8 @@ const Game = {
     if (tc % 10  === 0) UI.renderOrders();
     if (tc % 20  === 0) UI.renderPrinters();
     if (tc % 12  === 0) UI.renderContracts();
-    if (tc % 40  === 0)
     if (tc % 60  === 0) { DailyGoals.refresh(); DailyGoals.render(); Suppliers.autoAI(); }
-    if (tc % 120 === 0)   this.saveGame();
+    // Autosave handled by _autoSaveTimer (30s), no duplicate needed here
     if (tc % 360 === 0)   Suppliers.fluctuate();
 
     // Market
@@ -10112,6 +10155,10 @@ const Game = {
           Sound.levelUp();
           Confetti.levelUp();
           UI.log(`🎉 Level omhoog! ${lvls[i].name}`,'success');
+          // Show warning at level 2 about upcoming rival
+          if (lvls[i].level === 2) {
+            UI.toast('⚠️ Geruchten: een rivaal is op weg naar jouw markt... (Level 3)', 'warn');
+          }
           // v17.2 fix: init rival on first reach of level 3 (only done in loadGame before)
           if (lvls[i].level === 3 && !State.rivalActive) {
             setTimeout(() => Rival.init(), 3000);
@@ -10311,7 +10358,21 @@ const Game = {
       })(),
       version:APP_VERSION,
     };
-    localStorage.setItem('pnp_save',JSON.stringify(d));
+    try {
+      const json = JSON.stringify(d);
+      // Rotate backup: keep last 3 saves for corruption recovery
+      try {
+        const prev = localStorage.getItem('pnp_save');
+        if (prev) {
+          localStorage.setItem('pnp_save_backup2', localStorage.getItem('pnp_save_backup1') || '');
+          localStorage.setItem('pnp_save_backup1', prev);
+        }
+      } catch(e) { /* backup rotation failed, continue with save */ }
+      localStorage.setItem('pnp_save', json);
+    } catch(e) {
+      UI.log('Save mislukt! Controleer opslagruimte.', 'error');
+      return;
+    }
     // Show save indicator
     const ind = $el('save-indicator');
     if (ind) {
@@ -10332,6 +10393,11 @@ const Game = {
       // Sla op bij pauzeren
       this.saveGame();
       this.lastTick = Date.now();
+      // Stop intervals to save CPU while paused
+      clearInterval(this._tickTimer);
+      clearInterval(this._eventTimer);
+      this._tickTimer = null;
+      this._eventTimer = null;
       btn.textContent = '▶';
       btn.classList.add('paused');
       btn.title = 'Hervat spel';
@@ -10347,6 +10413,9 @@ const Game = {
       if (State.speedrunActive) clearInterval(Speedrun._timer);
     } else {
       this.lastTick = Date.now(); // voorkom tijdsprong bij hervatten
+      // Restart intervals
+      if (!this._tickTimer)  this._tickTimer  = setInterval(()=>this.tick(), CONFIG.TICK_MS);
+      if (!this._eventTimer) this._eventTimer = setInterval(()=>this._maybeEvent(), 1000);
       btn.textContent = '⏸';
       btn.classList.remove('paused');
       btn.title = 'Pauzeer spel';
@@ -10386,24 +10455,71 @@ const Game = {
       try {
         const d = JSON.parse(e.target.result);
 
-        // Minimal validation to prevent broken saves
+        // Thorough validation to prevent broken saves
         if (!d || typeof d !== 'object') throw new Error('not an object');
-        if (typeof d.money !== 'number') throw new Error('missing money');
-        if (!Array.isArray(d.printers)) throw new Error('missing printers');
+        if (typeof d.money !== 'number' || !isFinite(d.money)) throw new Error('invalid money');
+        if (!Array.isArray(d.printers) || d.printers.length === 0) throw new Error('invalid printers');
+        if (typeof d.reputation !== 'number') throw new Error('invalid reputation');
+        if (typeof d.xp !== 'number') throw new Error('invalid xp');
+        if (!d.stats || typeof d.stats !== 'object') throw new Error('invalid stats');
+        if (!Array.isArray(d.ownedUpgrades)) throw new Error('invalid upgrades');
+        // Validate each printer has required fields
+        for (const p of d.printers) {
+          if (typeof p.id !== 'number' || typeof p.health !== 'number') throw new Error('invalid printer data');
+        }
 
         localStorage.setItem('pnp_save', JSON.stringify(d));
         UI.showPopup('Import Successful','Save loaded! Reloading game…');
         setTimeout(() => location.reload(), 1500);
       } catch(err) {
-        UI.showPopup('Import Failed', 'Invalid or incompatible save file.');
+        UI.showPopup('Import Failed', `Ongeldig of incompatibel save bestand: ${err.message}`);
       }
     };
     reader.readAsText(file);
   },
+  restoreBackup() {
+    const b1 = localStorage.getItem('pnp_save_backup1');
+    const b2 = localStorage.getItem('pnp_save_backup2');
+    if (!b1 && !b2) { UI.showPopup('Geen Backup', 'Er zijn nog geen backup saves beschikbaar.'); return; }
+    UI.showPopup('Backup Herstellen?',
+      'Dit laadt de vorige save en vervangt de huidige. De game wordt herladen.',
+      () => {
+        try {
+          const d = JSON.parse(b1 || b2);
+          if (!d || typeof d.money !== 'number') throw new Error('corrupt backup');
+          localStorage.setItem('pnp_save', b1 || b2);
+          location.reload();
+        } catch(e) {
+          UI.showPopup('Backup Corrupt', 'De backup is ook beschadigd. Probeer backup 2.');
+          if (b2) {
+            try {
+              const d2 = JSON.parse(b2);
+              if (d2 && typeof d2.money === 'number') {
+                localStorage.setItem('pnp_save', b2);
+                location.reload();
+              }
+            } catch(e2) {}
+          }
+        }
+      },
+      () => {}
+    );
+  },
   loadGame() {
-    const raw=localStorage.getItem('pnp_save'); if(!raw) return;
+    let raw=localStorage.getItem('pnp_save'); if(!raw) return;
     try {
-      const d=JSON.parse(raw);
+      let d;
+      try {
+        d=JSON.parse(raw);
+      } catch(parseErr) {
+        // Main save corrupt — try backups
+        UI.log('Save corrupt! Probeer backup te herstellen...','error');
+        const b1 = localStorage.getItem('pnp_save_backup1');
+        const b2 = localStorage.getItem('pnp_save_backup2');
+        if (b1) { try { d = JSON.parse(b1); localStorage.setItem('pnp_save', b1); UI.log('Backup 1 hersteld!','success'); } catch(e) {} }
+        if (!d && b2) { try { d = JSON.parse(b2); localStorage.setItem('pnp_save', b2); UI.log('Backup 2 hersteld!','success'); } catch(e) {} }
+        if (!d) { UI.log('Alle saves corrupt. Nieuw spel gestart.','error'); return; }
+      }
       // Load top-level fields (skip stats — handled separately below)
       Object.keys(d).forEach(k=>{
         if (k!=='version' && k!=='stats' && k in State) State[k]=d[k]??State[k];
@@ -10509,7 +10625,7 @@ const Game = {
       } catch(e) { /* ignore offline calc */ }
 
       UI.log('Save loaded.','info');
-    } catch(e){ UI.log('Could not load save.','error'); }
+    } catch(e){ UI.log(`Save laden mislukt: ${e.message || e}`,'error'); console.error('Save load error:', e); }
   },
   resetGame() {
     if (!confirm('Reset all progress? Cannot be undone.')) return;
@@ -11109,7 +11225,21 @@ const Rival = {
   init() {
     this._name = this.NAMES[Math.floor(Math.random() * this.NAMES.length)];
     State.rivalActive = true;
-    UI.log(`🤖 ${this._name} has entered the market! Accept orders quickly!`, 'warn');
+    // Gradual intro: start with slow steal rate, then ramp up
+    this._stealInterval = 90; // start slow (90s between steals)
+    this._stealTimer = 90;
+    UI.log(`🤖 ${this._name} heeft de markt betreden! Accepteer orders snel!`, 'warn');
+    UI.showPopup('🤖 Rivaal Gedetecteerd!',
+      `<div style="text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">🤖</div>
+        <strong style="font-family:var(--display);color:var(--danger);font-size:16px">${this._name}</strong>
+        <div style="color:var(--text-dim);font-size:11px;line-height:1.7;margin-top:8px">
+          Een rivaal is in de markt verschenen!<br>
+          Ze zullen af en toe orders proberen te stelen.<br><br>
+          <span style="color:var(--accent)">Tip:</span> Accepteer orders snel om ze niet kwijt te raken.<br>
+          Versla je rivaal door 20+ meer jobs te voltooien!
+        </div>
+      </div>`);
     // Show the rival banner persistently as scoreboard
     const banner = document.getElementById('rival-banner');
     const msgEl  = document.getElementById('rival-msg');
@@ -11135,7 +11265,8 @@ const Rival = {
     if (State.bizLevel < 3) return;
 
     this._stealTimer -= dt;
-    const interval = Math.max(30, this._stealInterval - State.bizLevel * 2);
+    // Gradual ramp: starts at 90s, decreases by 5s per level above 3, minimum 35s
+    const interval = Math.max(35, this._stealInterval - Math.max(0, State.bizLevel - 3) * 5);
     if (this._stealTimer <= 0) {
       this._stealTimer = interval + Math.random() * 20;
       this._maybeSteal();
