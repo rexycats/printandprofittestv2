@@ -741,6 +741,12 @@ body {
   animation: tutPulse 1.5s ease-in-out infinite;
 }
 @keyframes tutPulse { 0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.55),0 0 20px rgba(0,229,255,0.2);} 50%{box-shadow:0 0 0 9999px rgba(0,0,0,0.55),0 0 40px rgba(0,229,255,0.5);} }
+.tut-pointer {
+  position: absolute; font-size: 28px; pointer-events: none;
+  animation: tutPointerBounce 0.7s ease-in-out infinite alternate;
+  z-index: 1000; filter: drop-shadow(0 0 6px rgba(0,229,255,0.8));
+}
+@keyframes tutPointerBounce { 0%{transform:translateY(0) rotate(-20deg);} 100%{transform:translateY(-8px) rotate(-20deg);} }
 .tut-tooltip {
   position: absolute; background: var(--panel); border: 1px solid var(--accent);
   border-radius: 10px; padding: 14px 18px; max-width: 260px; pointer-events: all;
@@ -963,6 +969,11 @@ body {
   padding: 8px 12px 10px;
   border-top: 1px solid var(--border);
   background: rgba(0,0,0,0.2);
+}
+.chat-replies::before {
+  content: '💬 Jouw antwoord:';
+  display: block; font-size: 9px; color: var(--text-dim);
+  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px;
 }
 .chat-reply-btn {
   padding: 6px 10px; border-radius: 8px;
@@ -2045,7 +2056,7 @@ body.shaking { animation: screenShake 0.5s ease-out; }
 /* ── TOPBAR MONEY FLASH ── */
 @keyframes moneyGainPulse {
   0%  { color:#7fff6e; transform:scale(1.2); text-shadow:0 0 12px #7fff6e; }
-  100%{ color:inherit; transform:scale(1);   text-shadow:none; }
+  100%{ color:var(--accent3); transform:scale(1); text-shadow:none; }
 }
 .money-gained { animation: moneyGainPulse 0.45s ease-out forwards; }
 
@@ -3412,7 +3423,7 @@ input[type="text"], input[type="number"], select {
 <div class="streak-pill" id="streak-pill" style="display:none"><span class="label">🔥 Streak</span><span id="streak-val">0</span></div>
 <span class="night-badge" id="night-badge">🌙 Night Shift</span>
 <div class="prestige-badge" id="prestige-pill">🔥 <span id="prestige-val">P1</span></div>
-<div class="token-pill" id="token-pill" style="display:none;">🎲 <span id="token-val">0</span></div>
+<div class="token-pill" id="token-pill" style="display:none;" title="Print Tokens: verdien ze door filament-ketens te voltooien. Gebruik 10 tokens voor een Lootbox in het Accessoires-tabblad!">🎲 <span id="token-val">0</span> <span style="font-size:9px;color:rgba(251,191,36,0.6);font-weight:400">tokens</span></div>
 <div class="stat-pill" id="debt-pill" style="display:none;border-color:rgba(255,61,90,0.4)"><span class="label">💳 Debt</span><span class="value" id="debt-val" style="color:var(--danger)">€0</span></div>
 <div class="scrap-pill" id="scrap-pill" style="display:none">♻️ <span id="scrap-val">0</span> scrap</div>
 </div>
@@ -3556,6 +3567,10 @@ input[type="text"], input[type="number"], select {
 <div class="panel" style="flex:2;">
 <div class="panel-header"><div class="dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3);"></div> Print Station</div>
 <div class="panel-body" id="active-job-panel">
+<div id="idle-warning-banner" style="display:none;background:rgba(255,204,0,0.1);border:1px solid rgba(255,204,0,0.4);border-radius:var(--radius);padding:8px 12px;margin-bottom:10px;text-align:center;animation:bankBannerPulse 2s ease-in-out infinite;">
+  <div style="font-family:var(--display);font-weight:900;font-size:13px;color:var(--warn);">⚠ Printer staat stil!</div>
+  <div style="font-size:10px;color:var(--text-dim);margin-top:2px;">Accepteer een order om te beginnen met printen — je mist inkomsten!</div>
+</div>
 <div id="job-empty" style="text-align:center;padding:20px 0;color:var(--text-dim);">
 <svg style="width:120px;height:90px;opacity:0.2;margin-bottom:8px;" viewbox="0 0 120 90" xmlns="http://www.w3.org/2000/svg">
 <rect fill="#4fc3f7" height="5" rx="2" width="100" x="10" y="72"></rect>
@@ -3880,7 +3895,12 @@ input[type="text"], input[type="number"], select {
     </summary>
     <div class="acc-body">
       <div id="token-display" style="font-family:var(--display);font-weight:900;font-size:18px;color:#fbbf24">0 Tokens</div>
-      <div class="acc-hint">Verdien tokens door ketens te voltooien.</div>
+      <div class="acc-hint" style="line-height:1.6;">
+        <strong style="color:var(--text)">Wat zijn tokens?</strong><br>
+        Tokens zijn de dobbelsteenmunt van het spel. Je verdient ze door <strong style="color:#fbbf24">filament-ketens</strong> te voltooien: druk meerdere jobs van de gevraagde filamenten achter elkaar.<br><br>
+        <strong style="color:var(--text)">Wat doe je ermee?</strong><br>
+        Gebruik <strong style="color:#fbbf24">10 tokens</strong> per Lootbox voor willekeurige beloningen: cash, reputatie, XP, gratis reparaties of bonustokens!
+      </div>
       <button class="btn btn-sm" onclick="LootBox.open()" style="width:100%;background:linear-gradient(135deg,rgba(124,45,18,0.3),rgba(251,191,36,0.1));border:1px solid rgba(251,191,36,0.3);color:#fbbf24;">
         🎲 Open Lootbox (10 tokens)
       </button>
@@ -4149,7 +4169,8 @@ const CONFIG = {
   REP_PER_EXPIRED:    -1,
   MAX_REP:            200,
   REPAIR_COST_PER_HP: 0.5,
-  CONTRACT_REFRESH_S: 100,   // contracts refresh 
+  CONTRACT_REFRESH_S:  100,   // how often the contract pool is refreshed
+  CONTRACT_DEADLINE_S: 600,   // how long each contract lives (10 minutes at 1× speed)
   DAILY_REFRESH_S:    86400, // daily contract every 24h (real time)
   INCOME_HISTORY_MAX: 40,    // data points in graph
 
@@ -5719,7 +5740,7 @@ const Specialization = {
 // ── SMART TIPS ───────────────────────────────────────────────
 // ── PRINT WACHTRIJ ───────────────────────────────────────────
 const Queue = {
-  MAX: 8,
+  MAX: 15,
 
   add(order, filament, quality) {
     // Queue is Pro-only
@@ -5727,7 +5748,7 @@ const Queue = {
       switchPTab('queue');
       return;
     }
-    if (State.printQueue.length >= this.MAX) { UI.log('Wachtrij is vol (max 8)!', 'warn'); return; }
+    if (State.printQueue.length >= this.MAX) { UI.log('Wachtrij is vol (max 15)!', 'warn'); return; }
     if (State.printQueue.find(q => q.order.id === order.id)) { UI.log('Al in de wachtrij!', 'warn'); return; }
     State.orders = State.orders.filter(o => o.id !== order.id);
     State.printQueue.push({ order, filament: filament || State.selectedFilament, quality: quality || State.selectedQuality });
@@ -7840,6 +7861,12 @@ const Tutorial = {
       spotlight.className = 'tut-spotlight';
       spotlight.style.cssText = `top:${rect.top - 6}px;left:${rect.left - 6}px;width:${rect.width + 12}px;height:${rect.height + 12}px;`;
       overlay.appendChild(spotlight);
+      // Pointing hand indicator
+      const pointer = document.createElement('div');
+      pointer.className = 'tut-pointer';
+      pointer.textContent = '👆';
+      pointer.style.cssText = `top:${rect.top - 44}px;left:${rect.left + Math.min(rect.width * 0.3, 40)}px;`;
+      overlay.appendChild(pointer);
     }
     const tooltip = document.createElement('div');
     tooltip.className = 'tut-tooltip';
@@ -8175,8 +8202,8 @@ const Contracts = {
       isDaily,
       accepted:  false,
       completed: false,
-      expiresIn: isDaily ? CONFIG.DAILY_REFRESH_S : CONFIG.CONTRACT_REFRESH_S,
-      timeLeft:  isDaily ? CONFIG.DAILY_REFRESH_S : CONFIG.CONTRACT_REFRESH_S,
+      expiresIn: isDaily ? CONFIG.DAILY_REFRESH_S : CONFIG.CONTRACT_DEADLINE_S,
+      timeLeft:  isDaily ? CONFIG.DAILY_REFRESH_S : CONFIG.CONTRACT_DEADLINE_S,
     };
   },
 
@@ -8236,7 +8263,7 @@ const Contracts = {
     const active = State.contracts.find(x => x.id === State.activeContractId);
     const hasActive = active && active.accepted && !active.completed && active.timeLeft > 0;
     if (hasActive && active.id !== c.id) {
-      UI.toast('📄 Eén contract tegelijk! Rond eerst je actieve contract af.', 'warn');
+      UI.toast('📄 Eén contract tegelijk! Annuleer eerst je actieve contract.', 'warn');
       return;
     }
 
@@ -8247,6 +8274,16 @@ const Contracts = {
 
     Sound.click();
     UI.log(`📄 Actief contract: ${c.name}`, 'info');
+    UI.renderContracts();
+  },
+
+  cancel(contractId) {
+    const c = State.contracts.find(x => x.id === contractId);
+    if (!c) return;
+    c.accepted = false;
+    if (State.activeContractId === c.id) State.activeContractId = null;
+    Sound.click();
+    UI.log(`📄 Contract geannuleerd: ${c.name}`, 'warn');
     UI.renderContracts();
   },
 
@@ -8342,7 +8379,7 @@ const Printer = {
   tick(printer, dt) {
     if (!printer.active || !printer.job) return;
     printer.timeLeft -= dt;
-    printer.progress  = 1 - (printer.timeLeft / printer.totalTime);
+    printer.progress  = printer.totalTime > 0 ? 1 - (printer.timeLeft / printer.totalTime) : 0;
 
     // v9: Clog trigger for PA6/RESIN at ~50% progress
     if (!printer._clogTriggered && !State.clogActive &&
@@ -8580,7 +8617,8 @@ const Printer = {
     if (State.smartQueue && State.orders.length > 0) {
       setTimeout(() => {
         const best    = [...State.orders].sort((a, b) => b.reward - a.reward)[0];
-        const freeIdx = State.printers.findIndex(p => !p.active && p.id === printer.id);
+        // Fix: find ANY free, non-offline printer (not just the one that just finished)
+        const freeIdx = State.printers.findIndex(p => !p.active && !p._offline);
         if (best && freeIdx >= 0) Game._autoStartJob(freeIdx, best);
       }, 500);
     }
@@ -8655,16 +8693,17 @@ const Shop = {
       UI.renderShop(); return;
     }
     if (State.ownedUpgrades.includes(id)) return;
+    if (upg.unlockLevel && State.bizLevel < upg.unlockLevel) { UI.showPopup('Niet ontgrendeld', `${upg.name} vereist Business Level ${upg.unlockLevel}. Huidig level: ${State.bizLevel}.`); return; }
     if (r2(State.money) < upg.cost) { UI.showPopup('Onvoldoende saldo', `Je hebt €${upg.cost.toLocaleString('nl-NL',{minimumFractionDigits:2})} nodig voor ${upg.name}. Huidig saldo: €${r2(State.money).toFixed(2)}`); return; }
     State.money = r2(State.money - upg.cost);
     State.ownedUpgrades.push(id);
     if (!State.researchFlags) State.researchFlags = {};
     upg.apply(State);
     State.stats.upgradesBought++;
-    if (id==='printer2') State.printers.push({ id:1, name:'Printer #2', model:'BASIC', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 });
-    if (id==='printer3') State.printers.push({ id:2, name:'Printer #3', model:'BASIC', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 });
-    if (id==='printer4') State.printers.push({ id:3, name:'Printer #4', model:'BASIC', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 });
-    if (id==='printer5') State.printers.push({ id:4, name:'Titan #5',   model:'DELTA', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 });
+    if (id==='printer2') { State.printers.push({ id:1, name:'Printer #2', model:'BASIC', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 }); setTimeout(() => Queue.tryAutoStart(), 400); }
+    if (id==='printer3') { State.printers.push({ id:2, name:'Printer #3', model:'BASIC', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 }); setTimeout(() => Queue.tryAutoStart(), 400); }
+    if (id==='printer4') { State.printers.push({ id:3, name:'Printer #4', model:'BASIC', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 }); setTimeout(() => Queue.tryAutoStart(), 400); }
+    if (id==='printer5') { State.printers.push({ id:4, name:'Titan #5',   model:'DELTA', health:100, active:false, job:null, progress:0, timeLeft:0, totalTime:0 }); setTimeout(() => Queue.tryAutoStart(), 400); }
     if (id==='passive_income' || id==='etsy_store' || id==='franchise') $el('passive-pill').style.display='flex';
     if (id==='direct_drive') { State.tpuUnlocked = true; Suppliers.updateStockUI(); UI.renderFilamentRow(State.selectedFilament); }
     if (id==='resin_printer') { State.resinUnlocked = true; Suppliers.updateStockUI(); UI.renderFilamentRow(State.selectedFilament); }
@@ -8833,7 +8872,8 @@ const UI = {
       card.className=`order-card order-${fc}${o.urgent ? ' urgent-card' : ''}${o.isFlash ? ' order-flash' : ''}`;
       const sel = State.pendingOrder&&State.pendingOrder.id===o.id;
       if (sel) card.style.borderColor='var(--accent)';
-      const tpct=(o.timeLeft/((o.expiresIn||o.expireTime)||(o.urgent?45:CONFIG.ORDER_EXPIRE_S)))*100;
+      const _expBase=(o.expiresIn||o.expireTime)||(o.urgent?45:CONFIG.ORDER_EXPIRE_S);
+      const tpct=_expBase>0?(o.timeLeft/_expBase)*100:0;
       const mMult = Market.getMultiplier(o.filament);
       const mBadge = mMult >= 1.15 ? `<span class="market-bonus">▲ ×${mMult.toFixed(2)}</span>` :
                      mMult <= 0.85 ? `<span class="market-bonus market-malus">▼ ×${mMult.toFixed(2)}</span>` : '';
@@ -8909,7 +8949,7 @@ const UI = {
         const fc=filClass(r.filament);
         return `<div class="contract-req-item"><span class="tag tag-${fc}" style="font-size:8px">${r.filament}</span><div class="contract-req-bar"><div class="contract-req-fill" style="width:${pct}%"></div></div><span class="contract-req-label">${r.done}/${r.required}</span></div>`;
       }).join('');
-      card.innerHTML=`<div class="contract-header"><div><div class="contract-name">${c.name}</div><div style="color:var(--text-dim);font-size:11px;margin-top:2px">${c.customer}</div></div><div style="text-align:right"><div class="contract-reward">€${c.reward}</div><div style="color:var(--text-dim);font-size:11px">+${c.bonusRep} rep</div></div></div><div class="contract-req">${reqsHtml}</div><div class="contract-timer">⏳ Expires in ${timeStr}</div>${!c.accepted?`<div class="contract-actions"><button class="btn btn-warn btn-sm btn-full" onclick="Contracts.accept('${c.id}')">Accept Contract</button></div>`:'<div style="color:var(--accent);font-size:11px;margin-top:6px;letter-spacing:1px">✓ TRACKING PROGRESS</div>'}`;
+      card.innerHTML=`<div class="contract-header"><div><div class="contract-name">${c.name}</div><div style="color:var(--text-dim);font-size:11px;margin-top:2px">${c.customer}</div></div><div style="text-align:right"><div class="contract-reward">€${c.reward}</div><div style="color:var(--text-dim);font-size:11px">+${c.bonusRep} rep</div></div></div><div class="contract-req">${reqsHtml}</div><div class="contract-timer">⏳ Verloopt over ${timeStr}</div>${!c.accepted?`<div class="contract-actions"><button class="btn btn-warn btn-sm btn-full" onclick="Contracts.accept('${c.id}')">✓ Accepteer contract</button></div>`:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="color:var(--accent);font-size:10px;letter-spacing:1px;flex:1">✓ BEZIG</span><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;color:var(--danger);border-color:rgba(255,61,90,0.4)" onclick="Contracts.cancel('${c.id}')">✕ Annuleer</button></div>`}`;
       body.appendChild(card);
     });
     // Sync naar idle inline contracts panel — compacte kaarten
@@ -8939,7 +8979,7 @@ const UI = {
               <span style="font-size:10px;color:var(--text-dim);margin-left:auto">⏳ ${timeStr}</span>
             </div>
             <div style="margin-top:5px;background:rgba(255,255,255,0.06);border-radius:3px;height:4px;"><div style="height:4px;border-radius:3px;background:var(--accent3);width:${pct}%"></div></div>
-            ${!c.accepted ? `<button class="btn btn-warn btn-sm btn-full" style="margin-top:6px;min-height:0;padding:5px;font-size:11px;" onclick="Contracts.accept('${c.id}')" title="Accepteer dit contract — print de gevraagde jobs voor de deadline">✓ Accepteer contract</button>` : '<div style="color:var(--accent);font-size:10px;margin-top:5px;letter-spacing:1px">✓ BEZIG</div>'}`;
+            ${!c.accepted ? `<button class="btn btn-warn btn-sm btn-full" style="margin-top:6px;min-height:0;padding:5px;font-size:11px;" onclick="Contracts.accept('${c.id}')" title="Accepteer dit contract — print de gevraagde jobs voor de deadline">✓ Accepteer contract</button>` : `<div style="display:flex;align-items:center;gap:6px;margin-top:5px;"><span style="color:var(--accent);font-size:10px;letter-spacing:1px;flex:1">✓ BEZIG</span><button class="btn btn-ghost btn-sm" style="font-size:9px;padding:2px 6px;color:var(--danger);border-color:rgba(255,61,90,0.4);min-height:0;" onclick="Contracts.cancel('${c.id}')">✕</button></div>`}`;
           idleContracts.appendChild(card);
         });
       }
@@ -8968,6 +9008,13 @@ const UI = {
       if (anyActive) this._renderMonitorMode(); return;
     }
     empty.style.display='flex'; empty.style.flexDirection='column'; content.style.display='none';
+    // Show idle warning if printer has been idle for 30+ seconds with orders available
+    const idleBanner = document.getElementById('idle-warning-banner');
+    if (idleBanner) {
+      const hasOrders = State.orders.length > 0 || State.printQueue.length > 0;
+      const idleSecs = Game._idleSeconds || 0;
+      idleBanner.style.display = (hasOrders && idleSecs >= 30) ? 'block' : 'none';
+    }
     const tabs=$el('center-printer-tabs'); if(tabs) tabs.innerHTML='';
     // Draw idle canvas even when empty state is shown
     const badge = document.getElementById('stage-badge');
@@ -9211,31 +9258,47 @@ const UI = {
         const affordable=r2(State.money)>=upg.cost;
         const unlocked=State.bizLevel>=upg.unlockLevel;
         const proLocked=upg.premium&&!State.isPro;
+        const levelLocked=!unlocked;
         const card=document.createElement('div');
-        card.className=`upgrade-card ${owned?'owned':proLocked?'pro-locked':affordable?'affordable':''}`;
-        const _btnLabel = owned ? '' : proLocked ? '⚡ Ontgrendel met Pro' : !affordable ? `Nog €${r2(upg.cost - r2(State.money)).toFixed(2)} te kort` : 'KOPEN';
-        const _btnDis = (!upg.premium && !affordable) ? 'disabled' : '';
-        card.innerHTML=`<div class="upgrade-header"><div class="upgrade-name">${upg.name} ${owned?'✓':''} ${upg.premium?`<span class="pro-badge">PRO</span>`:''}</div><div class="upgrade-cost">${owned?'✓ Gekocht':upg.premium?'PRO':'€'+upg.cost.toLocaleString()}</div></div><div class="upgrade-desc">${upg.desc}</div><div class="upgrade-effect">${upg.effect}</div>${!owned?`<button class="btn btn-${proLocked?'pro':'primary'} btn-sm btn-full" style="margin-top:6px" onclick="Shop.buy('${upg.id}')" ${_btnDis}>${_btnLabel}</button>`:''}`;
+        card.className=`upgrade-card ${owned?'owned':proLocked?'pro-locked':(affordable&&!levelLocked)?'affordable':''} ${levelLocked&&!owned?'locked-upg':''}`;
+        const _btnLabel = owned ? '' : proLocked ? '⚡ Ontgrendel met Pro' : levelLocked ? `🔒 Level ${upg.unlockLevel} vereist` : !affordable ? `Nog €${r2(upg.cost - r2(State.money)).toFixed(2)} te kort` : 'KOPEN';
+        const _btnDis = (!upg.premium && (!affordable || levelLocked)) ? 'disabled' : '';
+        const lvlBadge = (upg.unlockLevel > 1 && !owned) ? `<span style="font-size:9px;color:${levelLocked?'var(--danger)':'var(--text-dim)'};margin-left:4px">Lvl ${upg.unlockLevel}</span>` : '';
+        card.innerHTML=`<div class="upgrade-header"><div class="upgrade-name">${upg.name} ${owned?'✓':''} ${upg.premium?`<span class="pro-badge">PRO</span>`:''}${lvlBadge}</div><div class="upgrade-cost">${owned?'✓ Gekocht':upg.premium?'PRO':'€'+upg.cost.toLocaleString()}</div></div><div class="upgrade-desc">${upg.desc}</div><div class="upgrade-effect">${upg.effect}</div>${!owned?`<button class="btn btn-${proLocked?'pro':'primary'} btn-sm btn-full" style="margin-top:6px" onclick="Shop.buy('${upg.id}')" ${_btnDis}>${_btnLabel}</button>`:''}`;
         container.appendChild(card);
       });
     });
-    // v8: Late-game upgrades section
+    // v8: Late-game upgrades — grouped by category
     const v8Upgs = (CONFIG.UPGRADES_V8||[]).filter(u => !u.premium);
     if (v8Upgs.length > 0) {
-      const header = document.createElement('div');
-      header.className = 'upgrade-category';
-      header.innerHTML = '🚀 Geavanceerde Upgrades';
-      container.appendChild(header);
-      v8Upgs.forEach(upg=>{
+      // Group V8 upgrades by their category
+      const v8CatMap = {};
+      const v8CatLabels = { reliability:'🔧 Betrouwbaarheid', speed:'⚡ Snelheid', profit:'💰 Winst & Passief', expansion:'🏭 Uitbreiding' };
+      v8Upgs.forEach(u => { const c = u.category || 'expansion'; (v8CatMap[c] = v8CatMap[c] || []).push(u); });
+      const v8Header = document.createElement('div');
+      v8Header.className = 'upgrade-category';
+      v8Header.innerHTML = '🚀 Geavanceerde Upgrades';
+      container.appendChild(v8Header);
+      Object.keys(v8CatMap).forEach(catKey => {
+        const catLabel = v8CatLabels[catKey] || catKey;
+        const subHeader = document.createElement('div');
+        subHeader.style.cssText = 'font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;padding:4px 0 2px;margin-top:4px;';
+        subHeader.textContent = catLabel;
+        container.appendChild(subHeader);
+        v8CatMap[catKey].forEach(upg=>{
         const owned=State.ownedUpgrades.includes(upg.id);
         const affordable=r2(State.money)>=upg.cost;
         const unlocked=State.bizLevel>=upg.unlockLevel;
         const tier = upg.cost >= 10000 ? 'tier4' : upg.cost >= 5000 ? 'tier3' : '';
         const card=document.createElement('div');
-        card.className=`upgrade-card ${tier} ${owned?'owned':(affordable&&unlocked?'affordable':'')} ${!unlocked?'locked-upg':''}`;
-        card.innerHTML=`<div class="upgrade-header"><div class="upgrade-name">${upg.name} ${owned?'✓':''}</div><div class="upgrade-cost">${owned?'Gekocht':'€'+upg.cost.toLocaleString()}</div></div><div class="upgrade-desc">${upg.desc}</div><div class="upgrade-effect">${upg.effect}</div>${!owned?`<button class="btn btn-primary btn-sm btn-full" style="margin-top:6px" onclick="Shop.buy('${upg.id}')" ${!affordable?'disabled':''}>Kopen</button>`:''}`;
+        card.className=`upgrade-card ${tier} ${owned?'owned':(affordable&&unlocked?'affordable':'')} ${(!unlocked&&!owned)?'locked-upg':''}`;
+        const v8BtnLabel = unlocked ? (!affordable ? `Nog €${r2(upg.cost - r2(State.money)).toFixed(2)} te kort` : 'Kopen') : `🔒 Level ${upg.unlockLevel} vereist`;
+        const v8BtnDis = (!affordable || !unlocked) ? 'disabled' : '';
+        const v8LvlBadge = !owned ? `<span style="font-size:9px;color:${unlocked?'var(--text-dim)':'var(--danger)'};margin-left:4px">Lvl ${upg.unlockLevel}</span>` : '';
+        card.innerHTML=`<div class="upgrade-header"><div class="upgrade-name">${upg.name} ${owned?'✓':''}${v8LvlBadge}</div><div class="upgrade-cost">${owned?'Gekocht':'€'+upg.cost.toLocaleString()}</div></div><div class="upgrade-desc">${upg.desc}</div><div class="upgrade-effect">${upg.effect}</div>${!owned?`<button class="btn btn-primary btn-sm btn-full" style="margin-top:6px" onclick="Shop.buy('${upg.id}')" ${v8BtnDis}>${v8BtnLabel}</button>`:''}`;
         container.appendChild(card);
-      });
+        }); // end v8CatMap[catKey].forEach
+      }); // end Object.keys(v8CatMap).forEach
     }
   },
   renderBizLevel() {
@@ -9462,7 +9525,16 @@ const UI = {
   Particles.screenBurst('#7fff6e', 18);
 },
 
+  _popupQueue: [],
   showPopup(title, body, okCb, cancelCb) {
+    // If a popup is already visible, queue this one instead of overwriting
+    if ($el('popup-overlay').classList.contains('visible')) {
+      this._popupQueue.push({ title, body, okCb, cancelCb });
+      return;
+    }
+    this._showPopupNow(title, body, okCb, cancelCb);
+  },
+  _showPopupNow(title, body, okCb, cancelCb) {
     $el('popup-title').textContent=title;
     $el('popup-body').innerHTML=body;
     $el('popup-box').className='popup';
@@ -9471,6 +9543,11 @@ const UI = {
     ok.onclick=()=>{ closePopup(); if(okCb) okCb(); };
     can.onclick=()=>{ closePopup(); if(cancelCb) cancelCb(); };
     $el('popup-overlay').classList.add('visible');
+  },
+  _flushPopupQueue() {
+    if (this._popupQueue.length === 0) return;
+    const next = this._popupQueue.shift();
+    setTimeout(() => this._showPopupNow(next.title, next.body, next.okCb, next.cancelCb), 150);
   },
 
   showContractToast(c) {
@@ -9752,18 +9829,25 @@ const Game = {
 
   _tickPassiveIncome(dt) {
     if (State.passivePerMin <= 0) return;
-    State.passiveTick += dt;
-    if (State.passiveTick < 60) return;
-    const earned = State.passivePerMin;
-    State.money             = r2(State.money + earned);
-    State.stats.totalEarned = r2(State.stats.totalEarned + earned);
-    State.stats.passiveEarned = (State.stats.passiveEarned||0) + earned;
-    State.passiveTick -= 60;
-    State.incomeHistory.push({ t: Date.now(), v: earned, type: 'passive' });
-    if (State.incomeHistory.length > CONFIG.INCOME_HISTORY_MAX) State.incomeHistory.shift();
-    UI.floatMoney(`+€${earned} (passive)`);
-    UI.log(`Passive income: +€${earned}`, 'money');
-    UI.renderGraphCanvas();
+    State.passiveTick = (State.passiveTick || 0) + dt;
+    // Use while to handle large dt (e.g. after browser tab was inactive)
+    let ticks = 0;
+    while (State.passiveTick >= 60) {
+      const earned = State.passivePerMin;
+      State.money             = r2(State.money + earned);
+      State.stats.totalEarned = r2(State.stats.totalEarned + earned);
+      State.stats.passiveEarned = (State.stats.passiveEarned||0) + earned;
+      State.passiveTick -= 60;
+      TaxSystem.accrue(earned);
+      State.incomeHistory.push({ t: Date.now(), v: earned, type: 'passive' });
+      if (State.incomeHistory.length > CONFIG.INCOME_HISTORY_MAX) State.incomeHistory.shift();
+      ticks++;
+    }
+    if (ticks > 0) {
+      UI.floatMoney(`+€${r2(State.passivePerMin * ticks)} (passive)`);
+      UI.log(`Passive income: +€${r2(State.passivePerMin * ticks)}`, 'money');
+      UI.renderGraphCanvas();
+    }
   },
 
   // Cached DOM refs for hot live-progress path (populated on first use)
@@ -9877,6 +9961,14 @@ const Game = {
     Subscriptions.tick(dt);
     Insurance.tick(dt);
 
+    // Idle time tracker for warning banner
+    const anyPrinting = State.printers.some(p => p.active);
+    if (anyPrinting) {
+      Game._idleSeconds = 0;
+    } else {
+      Game._idleSeconds = (Game._idleSeconds || 0) + dt;
+    }
+
     // v11 sub-systems
     Trending.tick(dt);
     FlashOrders.tick(dt);
@@ -9948,8 +10040,8 @@ const Game = {
   },
 
   selectOrder(order) {
-    const freeIdx=State.printers.findIndex(p=>!p.active);
-    if (freeIdx<0) { UI.showPopup('No Free Printer','All printers busy. Wait for a job to finish.'); return; }
+    const freeIdx=State.printers.findIndex(p=>!p.active&&!p._offline);
+    if (freeIdx<0) { UI.showPopup('Geen vrije printer','Alle printers zijn bezet of offline. Wacht tot een job klaar is.'); return; }
     State.pendingOrder=order; State.selectedPrinterIdx=freeIdx;
     if (State.reputation>=CONFIG.FILAMENTS[order.filament].unlockRep) State.selectedFilament=order.filament;
     else State.selectedFilament='PLA';
@@ -10485,6 +10577,8 @@ function closePopup() {
   $el('popup-ok').onclick=()=>closePopup();
   $el('popup-cancel').style.display='none';
   $el('popup-box').className='popup';
+  // Show next queued popup if any
+  if (UI && UI._flushPopupQueue) UI._flushPopupQueue();
 }
 
 // ── v8: RESEARCH SYSTEM ──────────────────────────────────
@@ -10554,7 +10648,8 @@ const Research = {
     let html = '';
     if (State.activeResearch) {
       const r = CONFIG.RESEARCH.find(x=>x.id===State.activeResearch.id);
-      const pct = Math.min(100, (State.activeResearch.progress / State.activeResearch.total)*100);
+      const _rTot = (State.activeResearch.total > 0) ? State.activeResearch.total : 1;
+      const pct = Math.min(100, (State.activeResearch.progress / _rTot)*100);
       html += `<div class="active-research-banner">
         <div class="arb-icon">${r?.icon||'⚗️'}</div>
         <div style="flex:1">
@@ -10562,7 +10657,7 @@ const Research = {
           <div class="arb-sub">${r?.effect||''}</div>
           <div class="arb-bar"><div class="arb-fill" data-research-fill style="width:${pct.toFixed(1)}%"></div></div>
         </div>
-        <div class="arb-time" data-research-remaining style="font-family:var(--display);font-weight:900;font-size:14px;color:var(--accent)">${(State.activeResearch.total - State.activeResearch.progress).toFixed(0)}s</div>
+        <div class="arb-time" data-research-remaining style="font-family:var(--display);font-weight:900;font-size:14px;color:var(--accent)">${Math.max(0,_rTot - State.activeResearch.progress).toFixed(0)}s</div>
       </div>`;
     }
     html += '<div class="research-tree">';
@@ -11008,8 +11103,8 @@ function renderMilestoneProgress() {
 const Rival = {
   NAMES: ['PrintBot 3000','FilamentFoe','SpeedPrinter AI','RivalRobot','NozzleNemesis'],
   _name: 'PrintBot',
-  _stealTimer: 35, // fix: start with full interval so rival doesn't steal immediately
-  _stealInterval: 35, // seconds between steals, decreases with level
+  _stealTimer: 60, // fix: start with full interval so rival doesn't steal immediately
+  _stealInterval: 60, // seconds between steals, decreases with level
 
   init() {
     this._name = this.NAMES[Math.floor(Math.random() * this.NAMES.length)];
@@ -11040,9 +11135,9 @@ const Rival = {
     if (State.bizLevel < 3) return;
 
     this._stealTimer -= dt;
-    const interval = Math.max(15, this._stealInterval - State.bizLevel * 2);
+    const interval = Math.max(30, this._stealInterval - State.bizLevel * 2);
     if (this._stealTimer <= 0) {
-      this._stealTimer = interval + Math.random() * 15;
+      this._stealTimer = interval + Math.random() * 20;
       this._maybeSteal();
     }
   },
@@ -11075,25 +11170,9 @@ const Rival = {
     this._updateScoreDisplay();
 
     UI.log(`🤖 ${this._name} stole order: "${victim.name}"! -1 Rep`, 'warn');
+    UI.toast(`🤖 ${this._name} stal "${victim.name}" (€${victim.reward.toFixed(2)}) − Wees sneller!`, 'warn');
     UI.renderOrders();
     UI.updateTopBar();
-
-    // Toon als popup (meer zichtbaar dan kleine toast)
-    UI.showPopup(
-      `🤖 ${this._name} stal je order!`,
-      `<div style="text-align:center">
-        <div style="font-size:36px;margin-bottom:8px">🤖😤</div>
-        <div style="font-family:var(--display);font-weight:900;font-size:16px;color:var(--danger);margin-bottom:8px">Order gestolen!</div>
-        <div style="background:rgba(255,61,90,0.08);border:1px solid rgba(255,61,90,0.2);border-radius:var(--radius);padding:10px;margin-bottom:10px">
-          <div style="font-weight:700;color:var(--text)">${victim.name}</div>
-          <div style="font-size:11px;color:var(--text-dim);margin-top:3px">€${victim.reward.toFixed(2)} misgelopen · −1 reputatie</div>
-        </div>
-        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">
-          ${this._name} is sneller dan jij.<br>
-          <span style="color:var(--warn)">Accepteer orders sneller of koop de Rival Blocker legacy perk.</span>
-        </div>
-      </div>`
-    );
   },
 
   onJobComplete() {
@@ -11104,7 +11183,7 @@ const Rival = {
     const lead = (State.playerVsRival || 0) - State.rivalScore;
     if (lead >= 20 && !State._rivalDefeated) {
       State._rivalDefeated = true;
-      this._stealInterval = 50; // fix: was State._stealInterval (had no effect)
+      this._stealInterval = 80; // rival defeated — slower steal rate
       const prize = 200 + State.bizLevel * 50;
       State.money = r2(State.money + prize);
       TaxSystem.accrue(prize);
@@ -11125,7 +11204,7 @@ const Rival = {
     // Reset both scores so the player has a fair shot at defeating the rival again
     State.playerVsRival = 0;
     State.rivalScore = 0;
-    this._stealInterval = Math.max(12, 35 - State.bizLevel * 3); // faster at higher levels
+    this._stealInterval = Math.max(30, 60 - State.bizLevel * 3); // faster at higher levels
     this._name = this.NAMES[Math.floor(Math.random() * this.NAMES.length)] + ' MkII';
     UI.log(`🤖 ${this._name} is back — and faster! Keep up!`, 'warn');
   },
@@ -12633,9 +12712,9 @@ const ClientChat = {
       UI.renderPrinters();
     }, 350);
 
-    // Auto-close after follow-up
+    // Auto-close after follow-up — give 12s so player can read the response
     clearTimeout(this._dismissTimer);
-    this._dismissTimer = setTimeout(() => this.dismiss(), 5500);
+    this._dismissTimer = setTimeout(() => this.dismiss(), 12000);
     this._cooldown = 120 + Math.random() * 180;
   },
 
