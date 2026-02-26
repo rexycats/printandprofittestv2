@@ -3402,9 +3402,320 @@ input[type="text"], input[type="number"], select {
 }
 /* Remove the phone-width constraint */
 @media (min-width: 700px) {
-  #topbar, .market-bar, #main, #speedrun-bar, 
+  #topbar, .market-bar, #main, #speedrun-bar,
   body { justify-content: unset !important; }
   body::before, body::after { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   v18 VISUAL UPGRADE — Sterker, mooier, mobile-first
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── TOPBAR: Rijkere stat pills ── */
+.stat-pill {
+  background: linear-gradient(135deg, rgba(26,30,42,0.95), rgba(20,24,36,0.95)) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.stat-pill:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+.stat-pill .label {
+  font-size: 9px !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  color: rgba(212,218,232,0.5) !important;
+}
+/* Cash pill extra glow */
+.stat-pill:has(#money-val) {
+  border-color: rgba(127,255,110,0.18) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px rgba(127,255,110,0.08) !important;
+}
+#money-val { font-size: 16px !important; }
+
+/* Topbar zelf: lichte glas-morfisme glans */
+#topbar {
+  background: linear-gradient(180deg, rgba(22,27,38,0.98), rgba(16,20,30,0.98)) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+/* Logo: neon glow versterkt */
+.logo {
+  text-shadow: 0 0 24px rgba(0,229,255,0.5), 0 0 48px rgba(0,229,255,0.2) !important;
+}
+
+/* ── ORDER CARDS: Visueel krachtiger ── */
+.order-card {
+  background: linear-gradient(160deg, rgba(26,30,42,0.95) 0%, rgba(19,22,30,0.95) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  transition: transform 0.18s cubic-bezier(0.2,0.9,0.2,1),
+              box-shadow 0.18s, border-color 0.18s !important;
+}
+.order-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,229,255,0.25) !important;
+  border-color: rgba(0,229,255,0.35) !important;
+}
+/* Linker accent balk dikker en met glow */
+.order-card::before {
+  width: 4px !important;
+  border-radius: 0 2px 2px 0 !important;
+  opacity: 0.9;
+}
+.order-pla::before  { box-shadow: 2px 0 12px rgba(79,195,247,0.5) !important; }
+.order-petg::before { box-shadow: 2px 0 12px rgba(206,147,216,0.5) !important; }
+.order-pa6::before  { box-shadow: 2px 0 12px rgba(255,171,64,0.5) !important; }
+
+/* Reward groter en meer glow */
+.order-reward {
+  font-size: 22px !important;
+  text-shadow: 0 0 16px rgba(127,255,110,0.5) !important;
+}
+.order-name { font-size: 14px !important; letter-spacing: 0.3px !important; }
+
+/* Deadline timer: urgentie zichtbaarder */
+.order-timer { height: 3px !important; margin-top: 10px !important; border-radius: 2px !important; overflow: hidden; }
+.order-timer-fill {
+  transition: width 1s linear, background 2s ease !important;
+  box-shadow: 0 0 8px rgba(255,204,0,0.4);
+}
+
+/* ── CONTRACT CARDS: Sterker ── */
+.contract-card {
+  background: linear-gradient(160deg, rgba(26,30,42,0.95), rgba(19,22,30,0.95)) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+}
+.contract-reward {
+  font-size: 22px !important;
+  text-shadow: 0 0 16px rgba(255,204,0,0.45) !important;
+}
+
+/* ── PRINTER CARDS: Rijkere status look ── */
+.printer-card {
+  background: linear-gradient(160deg, rgba(22,27,38,0.98), rgba(17,20,28,0.98)) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35) !important;
+  transition: border-color 0.3s, box-shadow 0.3s !important;
+}
+.printer-card.active {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,229,255,0.2), 0 0 20px rgba(0,229,255,0.08) !important;
+}
+.printer-card.error {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,61,90,0.3), 0 0 20px rgba(255,61,90,0.1) !important;
+}
+/* Progress fill met shimmer */
+.progress-fill {
+  background: linear-gradient(90deg, var(--accent), #00b4d8, var(--accent2)) !important;
+  background-size: 200% 100% !important;
+  animation: progressShimmer 2s linear infinite !important;
+}
+@keyframes progressShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+/* Health bar richer */
+.health-fill {
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* ── BUTTONS: Meer tactiel gevoel ── */
+.btn-primary {
+  background: linear-gradient(135deg, #00d4f0, #00e5ff) !important;
+  box-shadow: 0 4px 0 rgba(0,100,130,0.6), 0 6px 20px rgba(0,229,255,0.25) !important;
+  color: #000d10 !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  transition: transform 0.1s, box-shadow 0.1s !important;
+}
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00e0f8, #33f0ff) !important;
+  box-shadow: 0 4px 0 rgba(0,100,130,0.6), 0 8px 28px rgba(0,229,255,0.4) !important;
+  transform: translateY(-1px) !important;
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(4px) !important;
+  box-shadow: 0 0 0 rgba(0,100,130,0.6), 0 4px 12px rgba(0,229,255,0.2) !important;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #e82d4a, #ff3d5a) !important;
+  box-shadow: 0 4px 0 rgba(120,0,20,0.5), 0 6px 16px rgba(255,61,90,0.25) !important;
+  transition: transform 0.1s, box-shadow 0.1s !important;
+}
+.btn-danger:active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 0 0 rgba(120,0,20,0.5) !important;
+}
+.btn-warn {
+  background: linear-gradient(135deg, #e6b800, #ffcc00) !important;
+  box-shadow: 0 4px 0 rgba(100,80,0,0.5), 0 6px 16px rgba(255,204,0,0.2) !important;
+  transition: transform 0.1s, box-shadow 0.1s !important;
+}
+.btn-warn:active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 0 0 rgba(100,80,0,0.5) !important;
+}
+.btn-ghost {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  backdrop-filter: blur(4px);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.18) !important; }
+
+/* ── PANELS: Subtiele glas glans ── */
+.panel {
+  background: linear-gradient(180deg, rgba(22,27,38,0.98) 0%, rgba(17,20,28,0.98) 100%) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+.panel-header {
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+}
+.panel-header .dot {
+  box-shadow: 0 0 10px var(--accent), 0 0 20px rgba(0,229,255,0.3) !important;
+}
+
+/* ── PROGRESS BARS: Rijker ── */
+.progress-bar { background: rgba(0,0,0,0.4) !important; }
+.contract-req-fill { box-shadow: 0 0 8px rgba(127,255,110,0.35) !important; }
+.layer-fill { box-shadow: 0 0 12px rgba(0,229,255,0.5) !important; }
+
+/* ── TELEM STRIP: Meer diepte ── */
+.telem-cell {
+  background: linear-gradient(180deg, rgba(20,24,36,0.95), rgba(16,20,28,0.95)) !important;
+}
+.telem-value { letter-spacing: 0.5px; }
+
+/* ── BADGES & TAGS: Meer contrast ── */
+.tag { font-weight: 700 !important; letter-spacing: 0.5px !important; }
+.tag-pla   { background: rgba(79,195,247,0.18)  !important; }
+.tag-petg  { background: rgba(206,147,216,0.18) !important; }
+.tag-pa6   { background: rgba(255,171,64,0.18)  !important; }
+.tag-time  { background: rgba(255,204,0,0.14)   !important; }
+
+/* ── MOBILE OVERVIEW: Duidelijkere sectie-scheiding ── */
+@media (max-width: 900px) {
+  /* Floating card look per sectie */
+  .panel {
+    border-radius: 18px !important;
+    overflow: hidden;
+  }
+
+  /* Section scroll hints */
+  .ptab-body, .panel-body {
+    scroll-padding-top: 8px;
+  }
+
+  /* Printer cards: meer ademruimte */
+  .printer-card {
+    padding: 16px !important;
+  }
+  .printer-stats {
+    gap: 8px !important;
+  }
+  .pstat-value { font-size: 18px !important; }
+
+  /* Order cards: grotere tap targets */
+  .order-card {
+    padding: 14px 14px 12px 16px !important;
+    border-radius: 14px !important;
+  }
+  .order-reward { font-size: 24px !important; }
+  .order-name { font-size: 15px !important; }
+
+  /* Contract cards */
+  .contract-card { border-radius: 14px !important; padding: 14px !important; }
+  .contract-reward { font-size: 24px !important; }
+
+  /* Job stats grid: 2×2 op mobiel */
+  .job-stats { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .jstat { border-radius: 12px !important; padding: 12px !important; }
+  .jstat-value { font-size: 22px !important; }
+
+  /* Filament knoppen: groter */
+  .filament-btn {
+    padding: 12px 8px !important;
+    border-radius: 12px !important;
+  }
+  .fil-name { font-size: 15px !important; }
+  .quality-btn { padding: 12px 6px !important; border-radius: 12px !important; }
+  .quality-label { font-size: 14px !important; }
+
+  /* Upgrade cards: duidelijker */
+  .upgrade-card { border-radius: 14px !important; padding: 14px !important; }
+  .upgrade-name { font-size: 15px !important; }
+  .upgrade-cost { font-size: 18px !important; }
+
+  /* Print stage canvas */
+  .print-stage { border-radius: 16px !important; }
+}
+
+/* ── SUPER SMALL: 375px en kleiner ── */
+@media (max-width: 400px) {
+  .order-reward { font-size: 20px !important; }
+  .contract-reward { font-size: 20px !important; }
+  .order-name, .contract-name { font-size: 13px !important; }
+  .jstat-value { font-size: 18px !important; }
+  .stat-pill { padding: 4px 8px !important; }
+  #money-val { font-size: 14px !important; }
+}
+
+/* ── SCROLL BARS: Rijker ── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(90,100,128,0.4); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(90,100,128,0.7); }
+
+/* ── NO-ORDERS / EMPTY STATES: Beter leesbaar ── */
+.no-orders {
+  padding: 40px 20px !important;
+  font-size: 12px !important;
+  opacity: 0.7;
+}
+
+/* ── MARKET BAR: Meer glas effect ── */
+.market-bar {
+  background: rgba(10,12,18,0.9) !important;
+  backdrop-filter: blur(8px) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+.market-pill {
+  background: rgba(26,30,42,0.8) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+.market-up   { text-shadow: 0 0 10px rgba(127,255,110,0.4); }
+.market-down { text-shadow: 0 0 10px rgba(255,61,90,0.4); }
+
+/* ── ACHIEVEMENT TOAST: Premie look ── */
+.achievement-toast {
+  border-radius: 16px !important;
+  backdrop-filter: blur(12px) !important;
+  background: linear-gradient(135deg, rgba(20,24,36,0.96), rgba(15,18,28,0.96)) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(127,255,110,0.2), 0 0 30px rgba(127,255,110,0.12) !important;
+}
+
+/* ── UPGRADE CARDS: Betere affordability indicator ── */
+.upgrade-card.affordable {
+  border-color: rgba(0,229,255,0.35) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,229,255,0.1) !important;
+}
+.upgrade-card.owned {
+  border-color: rgba(127,255,110,0.3) !important;
+}
+
+/* ── BOTTOM NAV ACTIVE: Sterker ── */
+@media (max-width: 900px) {
+  .tab-row-v2.main-nav .tab.active {
+    background: linear-gradient(135deg, rgba(0,229,255,0.25), rgba(0,180,216,0.15)) !important;
+    color: var(--accent) !important;
+    border: 1px solid rgba(0,229,255,0.35) !important;
+    box-shadow: 0 0 20px rgba(0,229,255,0.15), inset 0 1px 0 rgba(0,229,255,0.15) !important;
+    font-weight: 700 !important;
+  }
+  .tab-row-v2.main-nav {
+    background: rgba(8,11,20,0.92) !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) !important;
+  }
 }
 </style>
 </head>
