@@ -3522,10 +3522,17 @@ input[type="text"], input[type="number"], select {
 .btn-primary {
   background: linear-gradient(135deg, #00d4f0, #00e5ff) !important;
   box-shadow: 0 4px 0 rgba(0,100,130,0.6), 0 6px 20px rgba(0,229,255,0.25) !important;
-  color: #000d10 !important;
   font-weight: 700 !important;
   letter-spacing: 1px !important;
   transition: transform 0.1s, box-shadow 0.1s !important;
+}
+/* Disabled blijft leesbaar op donkere achtergrond */
+.btn-primary:disabled {
+  color: rgba(212,218,232,0.45) !important;
+  background: var(--bg3) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed !important;
 }
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #00e0f8, #33f0ff) !important;
