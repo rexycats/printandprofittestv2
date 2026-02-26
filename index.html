@@ -8379,7 +8379,7 @@ const Printer = {
   tick(printer, dt) {
     if (!printer.active || !printer.job) return;
     printer.timeLeft -= dt;
-    printer.progress  = 1 - (printer.timeLeft / printer.totalTime);
+    printer.progress  = printer.totalTime > 0 ? 1 - (printer.timeLeft / printer.totalTime) : 0;
 
     // v9: Clog trigger for PA6/RESIN at ~50% progress
     if (!printer._clogTriggered && !State.clogActive &&
@@ -8617,7 +8617,8 @@ const Printer = {
     if (State.smartQueue && State.orders.length > 0) {
       setTimeout(() => {
         const best    = [...State.orders].sort((a, b) => b.reward - a.reward)[0];
-        const freeIdx = State.printers.findIndex(p => !p.active && p.id === printer.id);
+        // Fix: find ANY free, non-offline printer (not just the one that just finished)
+        const freeIdx = State.printers.findIndex(p => !p.active && !p._offline);
         if (best && freeIdx >= 0) Game._autoStartJob(freeIdx, best);
       }, 500);
     }
@@ -8871,7 +8872,8 @@ const UI = {
       card.className=`order-card order-${fc}${o.urgent ? ' urgent-card' : ''}${o.isFlash ? ' order-flash' : ''}`;
       const sel = State.pendingOrder&&State.pendingOrder.id===o.id;
       if (sel) card.style.borderColor='var(--accent)';
-      const tpct=(o.timeLeft/((o.expiresIn||o.expireTime)||(o.urgent?45:CONFIG.ORDER_EXPIRE_S)))*100;
+      const _expBase=(o.expiresIn||o.expireTime)||(o.urgent?45:CONFIG.ORDER_EXPIRE_S);
+      const tpct=_expBase>0?(o.timeLeft/_expBase)*100:0;
       const mMult = Market.getMultiplier(o.filament);
       const mBadge = mMult >= 1.15 ? `<span class="market-bonus">▲ ×${mMult.toFixed(2)}</span>` :
                      mMult <= 0.85 ? `<span class="market-bonus market-malus">▼ ×${mMult.toFixed(2)}</span>` : '';
@@ -9827,18 +9829,25 @@ const Game = {
 
   _tickPassiveIncome(dt) {
     if (State.passivePerMin <= 0) return;
-    State.passiveTick += dt;
-    if (State.passiveTick < 60) return;
-    const earned = State.passivePerMin;
-    State.money             = r2(State.money + earned);
-    State.stats.totalEarned = r2(State.stats.totalEarned + earned);
-    State.stats.passiveEarned = (State.stats.passiveEarned||0) + earned;
-    State.passiveTick -= 60;
-    State.incomeHistory.push({ t: Date.now(), v: earned, type: 'passive' });
-    if (State.incomeHistory.length > CONFIG.INCOME_HISTORY_MAX) State.incomeHistory.shift();
-    UI.floatMoney(`+€${earned} (passive)`);
-    UI.log(`Passive income: +€${earned}`, 'money');
-    UI.renderGraphCanvas();
+    State.passiveTick = (State.passiveTick || 0) + dt;
+    // Use while to handle large dt (e.g. after browser tab was inactive)
+    let ticks = 0;
+    while (State.passiveTick >= 60) {
+      const earned = State.passivePerMin;
+      State.money             = r2(State.money + earned);
+      State.stats.totalEarned = r2(State.stats.totalEarned + earned);
+      State.stats.passiveEarned = (State.stats.passiveEarned||0) + earned;
+      State.passiveTick -= 60;
+      TaxSystem.accrue(earned);
+      State.incomeHistory.push({ t: Date.now(), v: earned, type: 'passive' });
+      if (State.incomeHistory.length > CONFIG.INCOME_HISTORY_MAX) State.incomeHistory.shift();
+      ticks++;
+    }
+    if (ticks > 0) {
+      UI.floatMoney(`+€${r2(State.passivePerMin * ticks)} (passive)`);
+      UI.log(`Passive income: +€${r2(State.passivePerMin * ticks)}`, 'money');
+      UI.renderGraphCanvas();
+    }
   },
 
   // Cached DOM refs for hot live-progress path (populated on first use)
@@ -10031,8 +10040,8 @@ const Game = {
   },
 
   selectOrder(order) {
-    const freeIdx=State.printers.findIndex(p=>!p.active);
-    if (freeIdx<0) { UI.showPopup('No Free Printer','All printers busy. Wait for a job to finish.'); return; }
+    const freeIdx=State.printers.findIndex(p=>!p.active&&!p._offline);
+    if (freeIdx<0) { UI.showPopup('Geen vrije printer','Alle printers zijn bezet of offline. Wacht tot een job klaar is.'); return; }
     State.pendingOrder=order; State.selectedPrinterIdx=freeIdx;
     if (State.reputation>=CONFIG.FILAMENTS[order.filament].unlockRep) State.selectedFilament=order.filament;
     else State.selectedFilament='PLA';
@@ -10639,7 +10648,8 @@ const Research = {
     let html = '';
     if (State.activeResearch) {
       const r = CONFIG.RESEARCH.find(x=>x.id===State.activeResearch.id);
-      const pct = Math.min(100, (State.activeResearch.progress / State.activeResearch.total)*100);
+      const _rTot = (State.activeResearch.total > 0) ? State.activeResearch.total : 1;
+      const pct = Math.min(100, (State.activeResearch.progress / _rTot)*100);
       html += `<div class="active-research-banner">
         <div class="arb-icon">${r?.icon||'⚗️'}</div>
         <div style="flex:1">
@@ -10647,7 +10657,7 @@ const Research = {
           <div class="arb-sub">${r?.effect||''}</div>
           <div class="arb-bar"><div class="arb-fill" data-research-fill style="width:${pct.toFixed(1)}%"></div></div>
         </div>
-        <div class="arb-time" data-research-remaining style="font-family:var(--display);font-weight:900;font-size:14px;color:var(--accent)">${(State.activeResearch.total - State.activeResearch.progress).toFixed(0)}s</div>
+        <div class="arb-time" data-research-remaining style="font-family:var(--display);font-weight:900;font-size:14px;color:var(--accent)">${Math.max(0,_rTot - State.activeResearch.progress).toFixed(0)}s</div>
       </div>`;
     }
     html += '<div class="research-tree">';
